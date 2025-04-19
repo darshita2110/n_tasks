@@ -1,4 +1,3 @@
-// calendar.dart
 import 'dart:convert';
 import 'dart:ui';
 import 'package:flutter/material.dart';
@@ -25,11 +24,12 @@ class _CalendarState extends State<Calendar> {
   CalendarFormat _calendarFormat = CalendarFormat.month;
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
+  bool isDarkMode = false; // Track dark mode state
 
   @override
   void initState() {
     super.initState();
-    loadEventsFromLocalStorage(); // 👈 Load events when calendar screen opens
+    loadEventsFromLocalStorage(); // Load events when calendar screen opens
   }
 
   Future<void> loadEventsFromLocalStorage() async {
@@ -42,56 +42,88 @@ class _CalendarState extends State<Calendar> {
     }
   }
 
-
   showAddEventBottomSheet() async {
     await showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: isDarkMode ? Colors.black : Colors.white,
       isScrollControlled: true,
       builder: (context) => AddEvent(selectedDate: _selectedDay),
     );
     setState(() {}); // Refresh to show new event
   }
 
+  // Toggle the dark mode
+  void toggleDarkMode() {
+    setState(() {
+      isDarkMode = !isDarkMode;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Color.fromRGBO(90, 172, 239, 0.5),
+        backgroundColor: isDarkMode
+            ? Color.fromRGBO(77, 85, 122, 0.8352941176470589)
+            : Color.fromRGBO(115, 182, 237, 1.0),
         centerTitle: true,
-        title: const Text(
+        title: Text(
           'CALENDAR',
           style: TextStyle(
-              fontSize: 35,
-              fontFamily: 'Cookie',
-              color: Color.fromRGBO(0, 0, 0, 1)),
+            fontSize: 35,
+            fontFamily: 'Cookie',
+            color: isDarkMode ? Colors.white : Color.fromRGBO(0, 0, 0, 1),
+          ),
         ),
-      ), // AppBar
+        actions: [
+          IconButton(
+            icon: Icon(isDarkMode ? Icons.light_mode : Icons.dark_mode),
+            onPressed: toggleDarkMode,
+          ),
+        ],
+      ),
       body: Container(
         decoration: BoxDecoration(
           image: DecorationImage(
-            image: AssetImage('assets/images/calendar.jpg'),
+            image: AssetImage(isDarkMode
+                ? 'assets/images/dark.jpg' // Change to dark mode background image
+                : 'assets/images/calendar.jpg'), // Original background for light mode
             fit: BoxFit.cover,
           ),
         ),
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.only(top:5.0, right: 5,left: 5,bottom: 3),
+              padding: const EdgeInsets.only(top: 5.0, right: 5, left: 5, bottom: 3),
               child: DropdownButton<CalendarFormat>(
                 value: _calendarFormat,
-                items: const [
+                items: [
                   DropdownMenuItem(
                     value: CalendarFormat.month,
-                    child: Text('Month View'),
+                    child: Text(
+                      'Month View',
+                      style: TextStyle(
+                        color: isDarkMode ? Colors.white : Colors.black,
+                      ),
+                    ),
                   ),
                   DropdownMenuItem(
                     value: CalendarFormat.twoWeeks,
-                    child: Text('2 Weeks View'),
+                    child: Text(
+                      '2 Weeks View',
+                      style: TextStyle(
+                        color: isDarkMode ? Colors.white : Colors.black,
+                      ),
+                    ),
                   ),
                   DropdownMenuItem(
                     value: CalendarFormat.week,
-                    child: Text('Week View'),
+                    child: Text(
+                      'Week View',
+                      style: TextStyle(
+                        color: isDarkMode ? Colors.white : Colors.black,
+                      ),
+                    ),
                   ),
                 ],
                 onChanged: (value) {
@@ -100,12 +132,11 @@ class _CalendarState extends State<Calendar> {
                   });
                 },
               ),
-            ), // Dropdown
+            ),
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.only(left:5.0, right: 5, bottom:5,),
-                child: 
-                SingleChildScrollView(
+                padding: const EdgeInsets.only(left: 5.0, right: 5, bottom: 5),
+                child: SingleChildScrollView(
                   child: Column(
                     children: [
                       TableCalendar(
@@ -116,40 +147,53 @@ class _CalendarState extends State<Calendar> {
                         calendarStyle: CalendarStyle(
                           cellMargin: EdgeInsets.zero,
                           isTodayHighlighted: true,
-                          defaultTextStyle:
-                          TextStyle(fontSize: 22, fontFamily: 'Cookie'),
+                          defaultTextStyle: TextStyle(
+                            fontSize: 22,
+                            fontFamily: 'Cookie',
+                            color: isDarkMode ? Colors.white : Colors.black,
+                          ),
                           weekendTextStyle: TextStyle(
-                              fontSize: 22,
-                              color: Colors.red.shade700,
-                              fontFamily: 'Cookie'),
+                            fontSize: 22,
+                            color: Colors.red.shade700,
+                            fontFamily: 'Cookie',
+                          ),
                           todayTextStyle: TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                              fontFamily: 'Cookie'),
-                          weekNumberTextStyle: TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                              fontFamily: 'Cookie'),
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'Cookie',
+                            color: isDarkMode ? Colors.white : Colors.black,
+                          ),
                           todayDecoration: BoxDecoration(
-                              color: Color.fromRGBO(97, 190, 248, 0.76),
-                              shape: BoxShape.circle),
+                            color: Color.fromRGBO(97, 190, 248, 0.76),
+                            shape: BoxShape.circle,
+                          ),
                           selectedDecoration: BoxDecoration(
                             color: Color.fromRGBO(17, 79, 237, 0.62),
                             shape: BoxShape.circle,
                           ),
-                        ), // CalendarStyle
+                        ),
                         daysOfWeekStyle: DaysOfWeekStyle(
-                            weekdayStyle: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            weekendStyle: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.red.shade700)),
+                          weekdayStyle: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: isDarkMode ? Colors.white : Colors.black,
+                          ),
+                          weekendStyle: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.red.shade700,
+                          ),
+                        ),
                         rowHeight: 70,
                         daysOfWeekHeight: 50,
-                        headerStyle: HeaderStyle(formatButtonVisible: false),
+                        headerStyle: HeaderStyle(
+                          formatButtonVisible: false,
+                          titleTextStyle: TextStyle(
+                            color: isDarkMode ? Colors.white : Colors.black,
+                          ),
+                          leftChevronIcon: Icon(Icons.chevron_left, color: isDarkMode ? Colors.white : Colors.black),
+                          rightChevronIcon: Icon(Icons.chevron_right, color: isDarkMode ? Colors.white : Colors.black),
+                        ),
                         onDaySelected: (selectedDay, focusedDay) {
                           setState(() {
                             _selectedDay = selectedDay;
@@ -169,8 +213,7 @@ class _CalendarState extends State<Calendar> {
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: List.generate(events.length, (index) {
                                     return Container(
-                                      margin:
-                                      EdgeInsets.symmetric(horizontal: 0.5),
+                                      margin: EdgeInsets.symmetric(horizontal: 0.5),
                                       width: 8,
                                       height: 8,
                                       decoration: BoxDecoration(
@@ -184,63 +227,100 @@ class _CalendarState extends State<Calendar> {
                             }
                             return SizedBox();
                           },
-                        ), // CalendarBuilders
-                      ), // TableCalendar
+                        ),
+                      ),
                       const SizedBox(height: 10),
                       if (_selectedDay != null &&
                           _listofEventDays(_selectedDay!).isNotEmpty)
                         ..._listofEventDays(_selectedDay!).map((event) => Padding(
                           padding: const EdgeInsets.all(4.0),
                           child: Container(
-                            decoration: BoxDecoration(color: Color.fromRGBO(
-                                170, 216, 246, 0.6), borderRadius: BorderRadius.circular(30)) ,
+                            decoration: BoxDecoration(
+                              color: isDarkMode
+                                  ? Color.fromRGBO(33, 33, 33, 0.7)
+                                  : Color.fromRGBO(170, 216, 246, 0.6),
+                              borderRadius: BorderRadius.circular(30),
+                            ),
                             child: ListTile(
-                              leading: const Icon(Icons.event, color: Colors.blue),
-                              title: Text(event['eventName'],
-                                  style: const TextStyle(fontSize: 20, fontFamily: 'Cardo', fontWeight: FontWeight.w600)),
-                              subtitle: Text(event['descName'],
-                                  style: TextStyle(color: Color.fromRGBO(87, 84, 84, 1.0), fontSize: 18, fontFamily: 'Cardo', fontWeight: FontWeight.w600)),
+                              leading: const Icon(Icons.event,
+                                  color: Colors.blue),
+                              title: Text(
+                                event['eventName'],
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontFamily: 'Cardo',
+                                  fontWeight: FontWeight.w600,
+                                  color: isDarkMode
+                                      ? Colors.white
+                                      : Colors.black,
+                                ),
+                              ),
+                              subtitle: Text(
+                                event['descName'],
+                                style: TextStyle(
+                                  color: isDarkMode
+                                      ? Colors.white70
+                                      : Color.fromRGBO(87, 84, 84, 1.0),
+                                  fontSize: 18,
+                                  fontFamily: 'Cardo',
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                               trailing: IconButton(
                                 icon: Icon(Icons.delete, color: Colors.red),
                                 onPressed: () async {
                                   setState(() {
-                                    String dateString = '${_selectedDay!.day.toString().padLeft(2, '0')}-${_selectedDay!.month.toString().padLeft(2, '0')}-${_selectedDay!.year}';
+                                    String dateString =
+                                        '${_selectedDay!.day.toString().padLeft(2, '0')}-${_selectedDay!.month.toString().padLeft(2, '0')}-${_selectedDay!.year}';
                                     myEvents[dateString]?.remove(event);
-                                    if (myEvents[dateString]?.isEmpty ?? false) {
+                                    if (myEvents[dateString]?.isEmpty ??
+                                        false) {
                                       myEvents.remove(dateString);
                                     }
                                   });
 
                                   // Save updated events after deletion
-                                  SharedPreferences prefs = await SharedPreferences.getInstance();
-                                  await prefs.setString('events', json.encode(myEvents));
+                                  SharedPreferences prefs =
+                                  await SharedPreferences.getInstance();
+                                  await prefs.setString(
+                                      'events', json.encode(myEvents));
                                 },
                               ),
-                            )
-
+                            ),
                           ),
                         )),
                       if (_selectedDay != null &&
                           _listofEventDays(_selectedDay!).isEmpty)
-                        Container( padding: EdgeInsets.all(8.0),
-                          decoration: BoxDecoration(color: Color.fromRGBO(
-                              192, 225, 246, 0.792156862745098), borderRadius: BorderRadius.circular(20)),
+                        Container(
+                          padding: EdgeInsets.all(8.0),
+                          decoration: BoxDecoration(
+                            color: isDarkMode
+                                ? Color.fromRGBO(33, 33, 33, 0.7)
+                                : Color.fromRGBO(192, 225, 246, 0.8),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
                           child: Text(
                             'No events on this day.',
-                            style:
-                            TextStyle(fontSize: 18, fontFamily: 'Cardo' , fontWeight: FontWeight.w600),
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontFamily: 'Cardo',
+                              fontWeight: FontWeight.w600,
+                              color: isDarkMode ? Colors.white : Colors.black,
+                            ),
                           ),
                         ),
                     ],
                   ),
-                ), // Column inside Expanded
+                ),
               ),
-            ), // Expanded
+            ),
           ],
-        ), // Column
-      ), // Container
+        ),
+      ),
       floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: Color.fromRGBO(132, 197, 243, 0.67),
+        backgroundColor: isDarkMode
+            ? Color.fromRGBO(132, 197, 243, 0.67)
+            : Color.fromRGBO(90, 172, 239, 0.5),
         onPressed: () {
           showAddEventBottomSheet();
         },
@@ -251,7 +331,7 @@ class _CalendarState extends State<Calendar> {
             fontFamily: 'Cookie',
           ),
         ),
-      ), // FAB
-    ); // Scaffold
-  } // build
-} // _CalendarState
+      ),
+    );
+  }
+}
