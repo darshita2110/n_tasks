@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:ntasks/theme_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'bmi.dart';
 
 class MedicineTracker extends StatefulWidget {
   @override
@@ -153,6 +154,7 @@ class _MedicineTrackerState extends State<MedicineTracker> {
           ),
         ],
       ),
+      resizeToAvoidBottomInset: true,
       body: Stack(
         children: [
           Positioned.fill(
@@ -171,141 +173,168 @@ class _MedicineTrackerState extends State<MedicineTracker> {
               ),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: [
-                TextField(
-                  onChanged: (value) {
-                    setState(() {
-                      _searchQuery = value.trim().toLowerCase();
-                    });
-                  },
-                  decoration: InputDecoration(
-                    hintText: 'Search Medicine',
-                    prefixIcon: Icon(Icons.search),
-                    filled: true,
-                    fillColor: isDarkMode ? Colors.grey.shade900 : Colors.grey.shade200,
-                    contentPadding: EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(25.0),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              return SingleChildScrollView(
+                padding: EdgeInsets.only(
+                  left: 16,
+                  right: 16,
+                  top: 16,
+                  bottom: MediaQuery.of(context).viewInsets.bottom + 80,
                 ),
-
-                SizedBox(height: 20),
-                TextField(
-                  controller: _nameController,
-                  decoration: _inputDecoration('Medicine Name', context),
-                ),
-                SizedBox(height: 10),
-                TextField(
-                  controller: _quantityController,
-                  keyboardType: TextInputType.number,
-                  decoration: _inputDecoration('Quantity', context),
-                ),
-                SizedBox(height: 10),
-                Text('Select Time(s):', style: TextStyle(fontWeight: FontWeight.bold)),
-                Wrap(
-                  spacing: 10,
-                  children: _timeOptions.map((time) {
-                    final isSelected = _isSelected(_selectedTimes, time);
-                    return ChoiceChip(
-                      label: Text(time),
-                      selected: isSelected,
-                      onSelected: (_) => _toggleSelection(_selectedTimes, time),
-                      selectedColor: Colors.purple.shade100,
-                    );
-                  }).toList(),
-                ),
-                SizedBox(height: 10),
-                Text('Select Days:', style: TextStyle(fontWeight: FontWeight.bold)),
-                Wrap(
-                  spacing: 10,
-                  children: _dayOptions.map((day) {
-                    final isSelected = _isSelected(_selectedDays, day);
-                    return ChoiceChip(
-                      label: Text(day),
-                      selected: isSelected,
-                      onSelected: (_) => _toggleSelection(_selectedDays, day),
-                      selectedColor: Colors.teal.shade100,
-                    );
-                  }).toList(),
-                ),
-                SizedBox(height: 15),
-                Center(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      final name = _nameController.text.trim();
-                      final quantity = double.tryParse(_quantityController.text.trim());
-
-                      if (name.isNotEmpty && quantity != null) {
-                        _addOrUpdateMedicine(name, quantity, _selectedTimes, _selectedDays);
-                      }
-                    },
-                    child: Text(_editingIndex == null ? 'Add Medicine' : 'Update Medicine',
-                        style: TextStyle(fontSize: 20)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.teal,
-                      foregroundColor: Colors.white,
-                      padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15),
-                    ),
-                  ),
-                ),
-                SizedBox(height: 20),
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: filteredRecords.length,
-                    itemBuilder: (context, index) {
-                      final record = filteredRecords[index];
-                      final timeText = (record['times'] as List<dynamic>?)?.join(', ') ?? '';
-                      final dayText = (record['days'] as List<dynamic>?)?.join(', ') ?? '';
-                      return Card(
-                        color: isDarkMode ? Colors.grey.shade800 : Colors.white70,
-                        margin: EdgeInsets.symmetric(vertical: 5),
-                        child: ListTile(
-                          title: Text(
-                            '${record['name']}',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
-                              color: isDarkMode ? Colors.white : Colors.black87,
-                            ),
-                          ),
-                          subtitle: Text(
-                            'Quantity: ${record['quantity']}\nTime: $timeText\nDays: $dayText\nDate: ${record['date'].toString().substring(0, 16)}',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: isDarkMode ? Colors.white70 : Colors.black87,
-                            ),
-                          ),
-                          isThreeLine: true,
-                          trailing: Wrap(
-                            spacing: 8,
-                            children: [
-                              IconButton(
-                                icon: Icon(Icons.edit,
-                                    color: isDarkMode ? Colors.blueAccent : Colors.blue),
-                                onPressed: () => _editRecord(index),
-                              ),
-                              IconButton(
-                                icon: Icon(Icons.delete,
-                                    color: isDarkMode ? Colors.redAccent : Colors.red),
-                                onPressed: () => _deleteRecord(index),
-                              ),
-                            ],
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      TextField(
+                        onChanged: (value) {
+                          setState(() {
+                            _searchQuery = value.trim().toLowerCase();
+                          });
+                        },
+                        decoration: InputDecoration(
+                          hintText: 'Search Medicine',
+                          prefixIcon: Icon(Icons.search),
+                          filled: true,
+                          fillColor: isDarkMode ? Colors.grey.shade900 : Colors.grey.shade200,
+                          contentPadding: EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(25.0),
+                            borderSide: BorderSide.none,
                           ),
                         ),
-                      );
-                    },
+                      ),
+                      SizedBox(height: 20),
+                      TextField(
+                        controller: _nameController,
+                        decoration: _inputDecoration('Medicine Name', context),
+                      ),
+                      SizedBox(height: 10),
+                      TextField(
+                        controller: _quantityController,
+                        keyboardType: TextInputType.number,
+                        decoration: _inputDecoration('Quantity', context),
+                      ),
+                      SizedBox(height: 10),
+                      Text('Select Time(s):', style: TextStyle(fontWeight: FontWeight.bold)),
+                      Wrap(
+                        spacing: 10,
+                        children: _timeOptions.map((time) {
+                          final isSelected = _isSelected(_selectedTimes, time);
+                          return ChoiceChip(
+                            label: Text(time),
+                            selected: isSelected,
+                            onSelected: (_) => _toggleSelection(_selectedTimes, time),
+                            selectedColor: Colors.purple.shade100,
+                          );
+                        }).toList(),
+                      ),
+                      SizedBox(height: 10),
+                      Text('Select Days:', style: TextStyle(fontWeight: FontWeight.bold)),
+                      Wrap(
+                        spacing: 10,
+                        children: _dayOptions.map((day) {
+                          final isSelected = _isSelected(_selectedDays, day);
+                          return ChoiceChip(
+                            label: Text(day),
+                            selected: isSelected,
+                            onSelected: (_) => _toggleSelection(_selectedDays, day),
+                            selectedColor: Colors.teal.shade100,
+                          );
+                        }).toList(),
+                      ),
+                      SizedBox(height: 15),
+                      Center(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            final name = _nameController.text.trim();
+                            final quantity = double.tryParse(_quantityController.text.trim());
+
+                            if (name.isNotEmpty && quantity != null) {
+                              _addOrUpdateMedicine(name, quantity, _selectedTimes, _selectedDays);
+                            }
+                          },
+                          child: Text(
+                            _editingIndex == null ? 'Add Medicine' : 'Update Medicine',
+                            style: TextStyle(fontSize: 20),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.teal,
+                            foregroundColor: Colors.white,
+                            padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 20),
+                      ListView.builder(
+                        shrinkWrap: true,
+                        physics: NeverScrollableScrollPhysics(),
+                        itemCount: filteredRecords.length,
+                        itemBuilder: (context, index) {
+                          final record = filteredRecords[index];
+                          final timeText = (record['times'] as List<dynamic>?)?.join(', ') ?? '';
+                          final dayText = (record['days'] as List<dynamic>?)?.join(', ') ?? '';
+                          return Card(
+                            color: isDarkMode ? Colors.grey.shade800 : Colors.white70,
+                            margin: EdgeInsets.symmetric(vertical: 5),
+                            child: ListTile(
+                              title: Text(
+                                '${record['name']}',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18,
+                                  color: isDarkMode ? Colors.white : Colors.black87,
+                                ),
+                              ),
+                              subtitle: Text(
+                                'Quantity: ${record['quantity']}\nTime: $timeText\nDays: $dayText\nDate: ${record['date'].toString().substring(0, 16)}',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: isDarkMode ? Colors.white70 : Colors.black87,
+                                ),
+                              ),
+                              isThreeLine: true,
+                              trailing: Wrap(
+                                spacing: 8,
+                                children: [
+                                  IconButton(
+                                    icon: Icon(Icons.edit,
+                                        color: isDarkMode ? Colors.blueAccent : Colors.blue),
+                                    onPressed: () => _editRecord(index),
+                                  ),
+                                  IconButton(
+                                    icon: Icon(Icons.delete,
+                                        color: isDarkMode ? Colors.redAccent : Colors.red),
+                                    onPressed: () => _deleteRecord(index),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
+              );
+            },
           ),
         ],
       ),
+
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const BmiCalculatorPage()),
+          );
+        },
+        icon: Icon(Icons.fitness_center),
+        label: Text("BMI" , style: TextStyle(color: Colors.white, fontSize: 20 , fontWeight: FontWeight.bold),),
+        backgroundColor: Colors.teal,
+      ),
+
     );
   }
 }

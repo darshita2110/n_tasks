@@ -46,10 +46,11 @@ class _TimeTrackerPageState extends State<TimeTrackerPage> {
   }
 
   Future<void> _deleteSession(int index) async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
       _sessions.removeAt(index);
     });
-    await _saveSessions();
+    await prefs.setString('time_sessions', jsonEncode(_sessions));
   }
 
   Future<void> _loadAudio() async {
@@ -374,7 +375,7 @@ class _TimeTrackerPageState extends State<TimeTrackerPage> {
                         final session = _sessions[index];
                         final duration = Duration(seconds: session['duration']);
                         return Dismissible(
-                          key: Key(session['date']), // Unique key for each item
+                          key: Key(session['date']),
                           background: Container(
                             color: Colors.red,
                             alignment: Alignment.centerRight,
@@ -386,7 +387,7 @@ class _TimeTrackerPageState extends State<TimeTrackerPage> {
                           child: ListTile(
                             title: Text(session['task']),
                             subtitle: Text(_formatDuration(duration)),
-                            trailing: Text(session['date']),
+                            trailing: Text(DateTime.parse(session['date']).toString().substring(0, 16)),
                           ),
                         );
                       },
