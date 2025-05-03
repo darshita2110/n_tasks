@@ -1,7 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:ntasks/todo_list.dart';
 import 'package:ntasks/calendar.dart';
 import 'package:ntasks/expense.dart' ;
@@ -10,6 +10,14 @@ import 'package:ntasks/theme_provider.dart';
 import 'package:ntasks/notes.dart';
 import 'package:ntasks/time.dart';
 
+void main() {
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => ThemeProvider(),
+      child: MyApp(),
+    ),
+  );
+}
 const MaterialColor customDarkBlue = MaterialColor(
   0xFF00008B,
   <int, Color>{
@@ -25,44 +33,53 @@ const MaterialColor customDarkBlue = MaterialColor(
     900: Color(0xFF00004A),
   },
 );
-
 class NotesAndSongsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return NotesPage();
   }
 }
-
-void main() {
-  runApp(
-    ChangeNotifierProvider(
-      create: (_) => ThemeProvider(),
-      child: MyApp(),
-    ),
-  );
+class MyApp extends StatefulWidget {
+  @override
+  State<MyApp> createState() => _MyAppState();
 }
+class _MyAppState extends State<MyApp> {
+  late FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
 
-class MyApp extends StatelessWidget {
+  @override
+  void initState() {
+    flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+    var initializationSettingsAndroid =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+    var initializationSettings = InitializationSettings(
+      android: initializationSettingsAndroid,
+    );
+    flutterLocalNotificationsPlugin.initialize(initializationSettings);
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Homepage' ,
-      themeMode: themeProvider.currentTheme,
-      theme: ThemeData(
-        primarySwatch: customDarkBlue,
-        brightness: Brightness.light,
+    return Provider<FlutterLocalNotificationsPlugin>.value(
+      value: flutterLocalNotificationsPlugin,
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'Homepage',
+        themeMode: themeProvider.currentTheme,
+        theme: ThemeData(
+          primarySwatch: customDarkBlue,
+          brightness: Brightness.light,
+        ),
+        darkTheme: ThemeData(
+          brightness: Brightness.dark,
+          primarySwatch: customDarkBlue,
+        ),
+        home: HomePage(),
       ),
-      darkTheme: ThemeData(
-        brightness: Brightness.dark,
-        primarySwatch: customDarkBlue,
-      ),
-      home: HomePage(),
     );
   }
 }
-
 class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -174,9 +191,7 @@ class HomePage extends StatelessWidget {
                         height: 80,
                         child: HomeButton(
                             title: 'Medicine Tracker', page: MedicineTracker())),
-                  ],
-                ),
-              ),
+                  ],),),
               Container(
                 height: 30,
                 color: Colors.blueGrey.shade800,
@@ -197,7 +212,6 @@ class HomePage extends StatelessWidget {
     );
   }
 }
-
 class HomeButton extends StatelessWidget {
   final String title;
   final Widget page;

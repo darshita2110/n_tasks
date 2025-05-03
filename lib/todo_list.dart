@@ -4,16 +4,21 @@ import 'package:flutter/material.dart';
 import './checkbox.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'notification.dart';
 import 'theme_provider.dart';
+import 'package:ntasks/main.dart';
 
 class ToDoList extends StatefulWidget {
   @override
   State<ToDoList> createState() => _ToDoListState();
+
 }
 
 class _ToDoListState extends State<ToDoList> {
   final TextEditingController _taskController = TextEditingController();
   List<Map<String, dynamic>> _tasks = [];
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
@@ -44,7 +49,44 @@ class _ToDoListState extends State<ToDoList> {
       _taskController.clear();
     });
     _saveTasks();
+    ShowLocalNotification().showNotificaton(
+        'Task Saved!👍', 'Task "${task.trim()}" saved.');
+    // Scroll to bottom when new task is added
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    });
   }
+  void _showDeleteDialog(BuildContext context, int index) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Confirm Delete'),
+          content: Text('Are you sure you want to delete this item?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                _deleteTask(index);
+                Navigator.of(context).pop();
+              },
+              child: Text('Delete', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
 
   void _deleteTask(int index) {
     setState(() {
@@ -90,7 +132,10 @@ class _ToDoListState extends State<ToDoList> {
           Positioned.fill(
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-              child: Container(color: Theme.of(context).scaffoldBackgroundColor.withOpacity(themeProvider.isDarkMode ? 0.4 : 0.2)),
+              child: Container(
+                  color: Theme.of(context)
+                      .scaffoldBackgroundColor
+                      .withOpacity(themeProvider.isDarkMode ? 0.4 : 0.2)),
             ),
           ),
           Padding(
@@ -117,6 +162,7 @@ class _ToDoListState extends State<ToDoList> {
                 ),
                 Expanded(
                   child: ListView.builder(
+                    controller: _scrollController,
                     itemCount: _tasks.length,
                     itemBuilder: (context, index) {
                       return Dismissible(
@@ -134,7 +180,7 @@ class _ToDoListState extends State<ToDoList> {
                           text: _tasks[index]["text"],
                           isChecked: _tasks[index]["isChecked"],
                           onChanged: (val) => _toggleCheckbox(index, val),
-                          onDelete: () => _deleteTask(index),
+                          onDelete: () => _showDeleteDialog(context, index),
                         ),
                       );
                     },
@@ -145,57 +191,80 @@ class _ToDoListState extends State<ToDoList> {
           ),
         ],
       ),
-      bottomNavigationBar: Container(
-        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        child: Row(
-          children: [
-            Expanded(
-              child: TextField(
-                controller: _taskController,
-                cursorColor: Color.fromRGBO(145, 77, 40, 1.0),
-                style: TextStyle(color: themeProvider.isDarkMode ? Colors.white : Colors.black),
-                decoration: InputDecoration(
-                  hintText: "Add a new task",
-                  hintStyle: TextStyle(color: themeProvider.isDarkMode ? Colors.white70 : Colors.black54),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(30),
-                    borderSide: BorderSide(
-                      color: themeProvider.isDarkMode ? Colors.white : Color.fromRGBO(0, 0, 139, 1.0),
-                      width: 2,
+      resizeToAvoidBottomInset: true, // This is important for keyboard handling
+      bottomNavigationBar: Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom, // Adjust padding when keyboard appears
+        ),
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          color: Theme.of(context).scaffoldBackgroundColor,
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _taskController,
+                  cursorColor: Color.fromRGBO(145, 77, 40, 1.0),
+                  style: TextStyle(
+                      color: themeProvider.isDarkMode
+                          ? Colors.white
+                          : Colors.black),
+                  decoration: InputDecoration(
+                    hintText: "Add a new task",
+                    hintStyle: TextStyle(
+                        color: themeProvider.isDarkMode
+                            ? Colors.white70
+                            : Colors.black54),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30),
                     ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30),
+                      borderSide: BorderSide(
+                        color: themeProvider.isDarkMode
+                            ? Colors.white
+                            : Color.fromRGBO(0, 0, 139, 1.0),
+                        width: 2,
+                      ),
+                    ),
+                    filled: true,
+                    fillColor: themeProvider.isDarkMode
+                        ? Color.fromRGBO(66, 66, 66,
+                        1.0) // Dark mode text field background
+                        : Color.fromRGBO(173, 216, 230,
+                        1.0), // Light mode text field background
+                    prefixIcon: Icon(Icons.add,
+                        color: themeProvider.isDarkMode
+                            ? Colors.white70
+                            : Colors.black54),
+                    contentPadding:
+                    EdgeInsets.symmetric(vertical: 0, horizontal: 16),
                   ),
-                  filled: true,
-                  fillColor: themeProvider.isDarkMode
-                      ? Color.fromRGBO(66, 66, 66, 1.0) // Dark mode text field background
-                      : Color.fromRGBO(173, 216, 230, 1.0), // Light mode text field background
-                  prefixIcon: Icon(Icons.add, color: themeProvider.isDarkMode ? Colors.white70 : Colors.black54),
-                  contentPadding: EdgeInsets.symmetric(vertical: 0, horizontal: 16),
                 ),
               ),
-            ),
-            SizedBox(width: 12),
-            ElevatedButton(
-              onPressed: () => _addTask(_taskController.text),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.teal,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30),
+              SizedBox(width: 12),
+
+
+              ElevatedButton(
+                onPressed: () => _addTask(_taskController.text),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.teal,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                ),
+                child: Text(
+                  "Add",
+                  style: TextStyle(
+                    fontSize: 35,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Cookie',
+                    color: Colors.black, // White text for the button
+                  ),
                 ),
               ),
-              child: Text(
-                "Add",
-                style: TextStyle(
-                  fontSize: 35,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'Cookie',
-                  color: Colors.black, // White text for the button
-                ),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

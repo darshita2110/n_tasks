@@ -4,6 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'calendar.dart';
+import 'package:provider/provider.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:ntasks/main.dart';
 
 class AddEvent extends StatefulWidget {
   const AddEvent({super.key, required this.selectedDate});
@@ -124,6 +127,15 @@ class _AddEventState extends State<AddEvent> {
                     }
 
                     await saveEventsToLocalStorage(); // Save events to local storage
+                    final flutterLocalNotificationsPlugin =
+                    Provider.of<FlutterLocalNotificationsPlugin>(context, listen: false);
+                    var android = AndroidNotificationDetails(
+                        'channel id', 'channel NAME',
+                        priority: Priority.high, importance: Importance.max);
+                    var platform = NotificationDetails(android: android);
+                    flutterLocalNotificationsPlugin.show(
+                        0, 'Event Added!👍', 'Event "${_nameController.text.trim()}" saved!', platform,
+                        payload: 'Event saved');
 
                     print(
                         "New event added: ${json.encode(myEvents)}");

@@ -48,14 +48,42 @@ class _NotesPageState extends State<NotesPage> {
     });
     _saveNotes();
   }
+  void _showDeleteDialog(BuildContext context, int index) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Confirm Delete'),
+          content: Text('Are you sure you want to delete this item?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                _deleteNote(index);
+                Navigator.of(context).pop();
+              },
+              child: Text('Delete', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   void _deleteNote(int index) {
+    final noteToDelete = _filteredNotes[index];
     setState(() {
-      _notes.removeAt(index);
+      _notes.removeWhere((note) => note['text'] == noteToDelete['text']);
       _filteredNotes.removeAt(index);
     });
     _saveNotes();
   }
+
 
   void _searchNotes(String searchText) {
     setState(() {
@@ -165,7 +193,7 @@ class _NotesPageState extends State<NotesPage> {
                           trailing: IconButton(
                             icon: Icon(Icons.delete, color: Colors.red),
                             onPressed: () {
-                              _deleteNote(index);
+                              _showDeleteDialog(context, index);
                             },
                           ),
                         ),

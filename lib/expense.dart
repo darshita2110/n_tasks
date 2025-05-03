@@ -5,9 +5,10 @@ import 'package:ntasks/theme_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fl_chart/fl_chart.dart';
-// import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
+import 'package:ntasks/main.dart';
 
 // ======================
 // NotificationHelper commented out entirely
@@ -158,6 +159,15 @@ class _ExpenseTrackerState extends State<ExpenseTracker> {
       _expenses.add(expense);
     });
     _saveData();
+    final flutterLocalNotificationsPlugin =
+    Provider.of<FlutterLocalNotificationsPlugin>(context, listen: false);
+    var android = AndroidNotificationDetails(
+        'channel id', 'channel NAME',
+        priority: Priority.high, importance: Importance.max);
+    var platform = NotificationDetails(android: android);
+    flutterLocalNotificationsPlugin.show(
+        0, 'Expense Added!💸', '₹${amount.toStringAsFixed(2)} spent on $description', platform,
+        payload: 'Expense added');
 
     // NotificationHelper.showExpenseAddedNotification(amount, description);
 
@@ -171,6 +181,15 @@ class _ExpenseTrackerState extends State<ExpenseTracker> {
       _totalIncome += amount;
     });
     _saveData();
+    final flutterLocalNotificationsPlugin =
+    Provider.of<FlutterLocalNotificationsPlugin>(context, listen: false);
+    var android = AndroidNotificationDetails(
+        'channel id', 'channel NAME',
+        priority: Priority.high, importance: Importance.max);
+    var platform = NotificationDetails(android: android);
+    flutterLocalNotificationsPlugin.show(
+        0, 'Money Added!🪙', '₹${amount.toStringAsFixed(2)} added to your account', platform,
+        payload: 'Money added');
   }
 
   double _calculateTotalForDate(DateTime date) {
